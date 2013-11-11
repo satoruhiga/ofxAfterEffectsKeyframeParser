@@ -2,23 +2,6 @@
 
 #include "ofMain.h"
 
-/*
-
-// example
-
-ofxAfterEffectsKeyframeParser aekey;
-aekey.open("test.txt");
-aekey.dumpTrackName();
-
-const ofxAfterEffectsKeyframeParser::Track &t = aekey.getTrack("Motion Trackers/Tracker #1/Track Point #1/Attach Point");
-
-for (int i = 0 ; i <= aekey.getLastFrame(); i++)
-{
-	cout << i << " " << t.getParam(i, "X pixels") << endl;
-}
-
-*/
-
 class ofxAfterEffectsKeyframeParser
 {
 public:
@@ -44,8 +27,7 @@ public:
 				return 0;
 			}
 			
-			if (it == data.end()) return 0;
-			
+			if (it == data.end()) { it--; }
 			return it->second[param_name_map[param_name]];
 		}
 		
