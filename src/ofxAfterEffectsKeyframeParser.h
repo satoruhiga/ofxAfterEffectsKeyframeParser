@@ -2,51 +2,63 @@
 
 #include "ofMain.h"
 
+// -------------------------------------------------------------------------------------------
 class ofxAfterEffectsKeyframeParser
 {
 public:
 	
+	// ------------------------------------------------------
 	class Track
 	{
 		friend class ofxAfterEffectsKeyframeParser;
-		
-	public:
-		
-		void getTrackName() const { return track_name; }
-		
-		size_t getNumParams() const { return param_name.size(); }
-		string getParamName(size_t idx) const { return param_name.at(idx); }
-		
-		float getParam(float frame, const string& param_name) const
-		{
-			map<float, vector<float> >::iterator it = data.lower_bound(frame);
 			
-			if (param_name_map.find(param_name) == param_name_map.end())
+		public:
+			
+			void getTrackName() const { return track_name; }
+			
+			size_t getNumParams() const { return param_name.size(); }
+			string getParamName(size_t idx) const { return param_name.at(idx); }
+			
+			float getParam(float frame, const string& param_name) const
 			{
-				ofLogError("ofxAfterEffectsKeyframeParser::Track::getParam") << "invalid param name";
-				return 0;
+				map<float, vector<float> >::iterator it = data.lower_bound(frame);
+				
+				if (param_name_map.find(param_name) == param_name_map.end())
+				{
+					ofLogError("ofxAfterEffectsKeyframeParser::Track::getParam") << "invalid param name";
+					return 0;
+				}
+				
+				if (it == data.end()) { it--; }
+				return it->second[param_name_map[param_name]];
 			}
 			
-			if (it == data.end()) { it--; }
-			return it->second[param_name_map[param_name]];
-		}
-		
-	protected:
-		
-		string track_name;
-		vector<string> param_name;
-		mutable map<string, int> param_name_map;
-		mutable map<float, vector<float> > data;
+		protected:
+			
+			string track_name;
+			vector<string> param_name;
+			mutable map<string, int> param_name_map;
+			mutable map<float, vector<float> > data;
 	};
-	
+
+	// ------------------------------------------------------
 	void open(const string& path)
 	{
 		ofBuffer buf = ofBufferFromFile(path);
 		parse(buf);
 	}
 	
+	// ------------------------------------------------------
 	void dumpTrackName()
 	{
+		cout << "---------------------" << endl;
+		map<string, float>::iterator headerIt = header.begin();
+		while (headerIt != header.end())
+		{
+			cout << headerIt->first << ": " << headerIt->second << endl;
+			headerIt++;
+		}
+		
 		map<string, Track>::iterator it = tracks.begin();
 		while (it != tracks.end())
 		{
@@ -65,12 +77,53 @@ public:
 			
 			it++;
 		}
+		cout << "---------------------" << endl;
 	}
 	
+	// ------------------------------------------------------
 	const Track& getTrack(const string& track_name) { return tracks[track_name]; }
 	
+	// ------------------------------------------------------
 	float getFirstFrame() const { return first_frame; }
+	
+	// ------------------------------------------------------
 	float getLastFrame() const { return last_frame; }
+
+	// ------------------------------------------------------
+	float getSourceWidth()
+	{
+		 if( header.count("Source Width") > 0 ) { return header["Source Width"]; } else { return -1.0f; }
+	}
+	
+	// ------------------------------------------------------
+	float getSourceHeight()
+	{
+		if( header.count("Source Height") > 0 ) { return header["Source Height"]; } else { return -1.0f; }
+	}
+	
+	// ------------------------------------------------------
+	float getUnitsPerSecond()
+	{
+		if( header.count("Units Per Second") > 0 ) { return header["Units Per Second"]; } else { return -1.0f; }
+	}
+	
+	// ------------------------------------------------------
+	float getCompPixelAspectRatio()
+	{
+		if( header.count("Comp Pixel Aspect Ratio") > 0 ) { return header["Comp Pixel Aspect Ratio"]; } else { return -1.0f; }
+	}
+	
+	// ------------------------------------------------------
+	float getSourcePixelAspectRatio()
+	{
+		if( header.count("Source Pixel Aspect Ratio") > 0 ) { return header["Source Pixel Aspect Ratio"]; } else { return -1.0f; }
+	}
+
+	// ------------------------------------------------------
+	map<string, float> getHeader()
+	{
+		return header;
+	}
 	
 protected:
 	
@@ -80,6 +133,7 @@ protected:
 	float first_frame;
 	float last_frame;
 	
+	// ------------------------------------------------------
 	void parse(ofBuffer &buf)
 	{
 		bool is_header = false;
